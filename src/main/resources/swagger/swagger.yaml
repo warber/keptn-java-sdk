@@ -1,0 +1,206 @@
+---
+swagger: "2.0"
+info:
+  title: keptn api
+  version: develop
+basePath: /v1
+consumes:
+  - application/json
+  - application/cloudevents+json
+produces:
+  - application/json
+securityDefinitions:
+  key:
+    type: apiKey
+    in: header
+    name: x-token
+security:
+  - key: []
+
+paths:
+  /auth:
+    post:
+      tags:
+        - Auth
+      operationId: auth
+      summary: Checks the provided token
+      responses:
+        200:
+          description: Authenticated
+
+  /metadata:
+    get:
+      tags:
+        - Metadata
+      operationId: metadata
+      summary: Get keptn installation metadata
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "response_model.yaml#/definitions/metadata"              
+
+  /event:
+    post:
+      tags:
+        - Event
+      summary: Forwards the received event
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: "response_model.yaml#/definitions/keptnContextExtendedCE"
+      responses:
+        200:
+          description: Forwarded
+          schema:
+            $ref: "response_model.yaml#/definitions/eventContext"
+        default:
+          description: Error
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+    get:
+      tags:
+        - Event
+      deprecated: true
+      summary: 'Deprecated endpoint - please use /mongodb-datastore/v1/event'
+      parameters:
+        - name: keptnContext
+          in: query
+          type: string
+          required: true
+          description: KeptnContext of the events to get
+        - name: type
+          in: query
+          type: string
+          required: true
+          description: Type of the Keptn cloud event
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "response_model.yaml#/definitions/keptnContextExtendedCE"
+        404:
+          description: Failed. Event could not be found.
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+        default:
+          description: Error
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+
+  /project/{projectName}/stage/{stageName}/service/{serviceName}/evaluation:
+    parameters:
+      - $ref: "#/parameters/projectName"
+      - $ref: "#/parameters/stageName"
+      - $ref: "#/parameters/serviceName"
+    post:
+      tags:
+        - evaluation
+      summary: Trigger a new evaluation
+      operationId: triggerEvaluation
+      parameters:
+        - $ref: "#/parameters/evaluation"
+      responses:
+        200:
+          description: Evaluation has been triggered
+          schema:
+            $ref: "response_model.yaml#/definitions/eventContext"
+        400:
+          description: Evaluation could not be triggered
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+        default:
+          description: Error
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+
+
+  /config/bridge:
+    post:
+      tags:
+        - configuration
+      summary: Configures bridge credentials
+      parameters:
+        - $ref: "#/parameters/configureBridge"
+      responses:
+        200:
+          description: Bridge credentials were set successfully
+          schema:
+            type: string
+        400:
+          description: Bridge credentials could not be set
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+        default:
+          description: Error
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+
+    get:
+      tags:
+        - configuration
+      summary: get bridge credentials
+      responses:
+        200:
+          description: Bridge credentials have been retrieved
+          schema:
+            $ref: "configure_model.yaml#/definitions/configureBridge"
+        400:
+          description: Bridge credentials could not be retrieved
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+        default:
+          description: Error
+          schema:
+            $ref: "response_model.yaml#/definitions/error"
+
+parameters:
+  project:
+    in: body
+    name: project
+    description: Project entity
+    schema:
+      $ref: "project_model.yaml#/definitions/project"
+
+  projectName:
+    in: path
+    name: projectName
+    required: true
+    type: string
+    description: Name of the project
+
+  stageName:
+    in: path
+    name: stageName
+    required: true
+    type: string
+    description: Name of the stage
+
+  serviceName:
+    in: path
+    name: serviceName
+    required: true
+    type: string
+    description: Name of the service
+
+  service:
+    in: body
+    name: service
+    description: Service entity
+    schema:
+      $ref: "service_model.yaml#/definitions/service"
+
+  configureBridge:
+    in: body
+    name: configureBridge
+    description: Parameters for configuring the bridge access
+    schema:
+      $ref: "configure_model.yaml#/definitions/configureBridge"
+
+  evaluation:
+    in: body
+    name: evaluation
+    description: Evaluation
+    schema:
+      $ref: "evaluation_model.yaml#/definitions/evaluation"
